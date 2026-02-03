@@ -73,7 +73,7 @@ class ChartConstants:
         WIDTH = 800
         HEIGHT = 600
         DPI = 100
-        OUTPUT_FORMAT = "mermaid"  # Will be set after OutputFormats is defined
+        OUTPUT_FORMAT = "mcp_image"  # Default to PNG for MCP clients
         THEME = "default"  # Will be set after Themes is defined
         CONFIG_FILE = "~/.plots_mcp_config.json"
         
