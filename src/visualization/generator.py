@@ -53,7 +53,8 @@ _font_logger.info(f"Total fonts added: {_total_fonts_added}")
 
 # These fonts are tried in order; first available one is used
 # Note: TTC fonts may register as JP variant in matplotlib, so we include both
-matplotlib.rcParams['font.sans-serif'] = [
+# Store as module constant so we can reapply after style changes
+CJK_FONT_LIST = [
     'Noto Sans CJK JP',      # TTC often registers as JP (covers SC/TC/JP/KR glyphs)
     'Noto Sans CJK SC',      # Google Noto (Linux) - installed in Docker
     'Noto Sans SC',          # Noto variant
@@ -64,7 +65,14 @@ matplotlib.rcParams['font.sans-serif'] = [
     'Hiragino Sans GB',      # macOS fallback
     'DejaVu Sans',           # Universal fallback
 ]
+matplotlib.rcParams['font.sans-serif'] = CJK_FONT_LIST
 matplotlib.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
+
+
+def _apply_cjk_font_settings():
+    """Reapply CJK font settings after style changes that reset rcParams."""
+    matplotlib.rcParams['font.sans-serif'] = CJK_FONT_LIST
+    matplotlib.rcParams['axes.unicode_minus'] = False
 
 # Verify font configuration
 _resolved_font = matplotlib.font_manager.findfont('Noto Sans CJK JP')
@@ -190,6 +198,8 @@ class ChartGenerator:
             sns.set_style("whitegrid")
         else:
             plt.style.use("default")
+        # Reapply CJK font settings after style changes (style.use resets rcParams)
+        _apply_cjk_font_settings()
 
     @staticmethod
     def _get_colors(theme: Theme, custom_colors: Optional[List[str]] = None) -> List[str]:
