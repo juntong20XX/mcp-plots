@@ -141,9 +141,9 @@ def _configure_preferences_impl(
 def _render_chart_impl(
     chart_type: str,
     data: List[Dict[str, Any]] = None,
-    field_map: Dict[str, str] = None,
-    config_overrides: Dict[str, Any] = None,
-    options: Dict[str, Any] = None,
+    field_map: Optional[Dict[str, Optional[str]]] = None,
+    config_overrides: Optional[Dict[str, Any]] = None,
+    options: Optional[Dict[str, Any]] = None,
     output_format: str = None
 ) -> Dict[str, Any]:
     """
@@ -272,9 +272,9 @@ def register_tools(mcp_server, config: Dict[str, Any] = None):
     def render_chart(
         chart_type: str,
         data: List[Dict[str, Any]] = None,
-        field_map: Dict[str, str] = None,
-        config_overrides: Dict[str, Any] = None,
-        options: Dict[str, Any] = None,
+        field_map: Optional[Dict[str, Optional[str]]] = None,
+        config_overrides: Optional[Dict[str, Any]] = None,
+        options: Optional[Dict[str, Any]] = None,
         output_format: str = None
     ) -> Dict[str, Any]:
         """

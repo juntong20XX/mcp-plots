@@ -113,8 +113,8 @@ class FieldMapping:
     # time_field: Optional[str] = None      # TODO: implement temporal data
     
     @classmethod
-    def from_dict(cls, field_map: Dict[str, str]) -> 'FieldMapping':
-        """Create field mapping from dictionary"""
+    def from_dict(cls, field_map: Dict[str, Optional[str]]) -> 'FieldMapping':
+        """Create field mapping from dictionary (values may be null/None)."""
         return cls(
             x_field=field_map.get(ChartConstants.FieldNames.X_FIELD),
             y_field=field_map.get(ChartConstants.FieldNames.Y_FIELD),
