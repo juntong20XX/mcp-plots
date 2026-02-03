@@ -14,6 +14,7 @@ _font_logger = logging.getLogger(__name__ + ".font_config")
 # pyplot import triggers matplotlib initialization including font manager
 # =============================================================================
 import matplotlib
+import matplotlib.font_manager
 
 # Configure matplotlib font fallback for CJK (Chinese/Japanese/Korean) support
 # 1) Rebuild font cache to detect newly installed fonts (e.g., in Docker)
