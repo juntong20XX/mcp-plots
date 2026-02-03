@@ -12,7 +12,9 @@ Architecture:
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
+
+from mcp.types import ImageContent, TextContent
 
 from ..visualization.constants import ChartConstants
 from ..domain.models import ChartRequest, UserPreferences
@@ -61,7 +63,7 @@ def _configure_preferences_impl(
     chart_width: int = None,
     chart_height: int = None,
     reset_to_defaults: bool = False
-) -> Dict[str, Any]:
+) -> List[TextContent]:
     """
     Interactive configuration tool for setting user preferences.
     
@@ -79,13 +81,10 @@ def _configure_preferences_impl(
         
         if reset_to_defaults:
             prefs = config_service.reset_to_defaults()
-            return {
-                "content": [{
-                    "type": "text",
-                    "text": f"✅ **Configuration Reset**\n\nAll preferences reset to defaults:\n{_format_preferences(prefs.to_dict())}"
-                }],
-                "isError": False,
-            }
+            return [TextContent(
+                type="text",
+                text=f"✅ **Configuration Reset**\n\nAll preferences reset to defaults:\n{_format_preferences(prefs.to_dict())}"
+            )]
         
         # Validate inputs before updating
         updates = {}
@@ -117,28 +116,22 @@ def _configure_preferences_impl(
         # Show current config if no updates
         if not updates:
             current_prefs = config_service.get_user_preferences()
-            return {
-                "content": [{
-                    "type": "text",
-                    "text": f"📊 **Current Configuration**\n\n{_format_preferences(current_prefs.to_dict())}\n\n{_get_config_guide()}"
-                }],
-                "isError": False,
-            }
+            return [TextContent(
+                type="text",
+                text=f"📊 **Current Configuration**\n\n{_format_preferences(current_prefs.to_dict())}\n\n{_get_config_guide()}"
+            )]
         
         # Update preferences
         updated_prefs = config_service.update_preferences(**updates)
         
-        return {
-            "content": [{
-                "type": "text",
-                "text": f"✅ **Configuration Updated**\n\n{_format_preferences(updated_prefs.to_dict())}"
-            }],
-            "isError": False,
-        }
+        return [TextContent(
+            type="text",
+            text=f"✅ **Configuration Updated**\n\n{_format_preferences(updated_prefs.to_dict())}"
+        )]
         
     except Exception as e:
         logger.error(f"configure_preferences failed: {e}")
-        return {"content": [{"type": "text", "text": str(e)}], "isError": True}
+        raise
 
 
 def _render_chart_impl(
@@ -148,7 +141,7 @@ def _render_chart_impl(
     config_overrides: Optional[Dict[str, Any]] = None,
     options: Optional[Dict[str, Any]] = None,
     output_format: str = None
-) -> Dict[str, Any]:
+) -> List[Union[TextContent, ImageContent]]:
     """
     Render a chart from tabular data and return MCP-compatible content.
     
@@ -164,27 +157,22 @@ def _render_chart_impl(
     - options: generator-specific options (e.g., smooth, stack)
     - output_format: MCP_IMAGE (PNG), MCP_TEXT (SVG), or MERMAID
     """
-    try:
-        # Create chart request from parameters
-        request = ChartRequest.from_tool_params(
-            chart_type=chart_type,
-            data=data,
-            field_map=field_map,
-            config_overrides=config_overrides,
-            options=options,
-            output_format=output_format
-        )
-        
-        # Use chart service
-        chart_service = _get_chart_service()
-        response = chart_service.render_chart(request)
-        
-        # Convert to MCP format
-        return response.to_mcp_format()
-        
-    except Exception as e:
-        logger.error(f"render_chart failed: {e}")
-        return {"content": [{"type": "text", "text": str(e)}], "isError": True}
+    # Create chart request from parameters
+    request = ChartRequest.from_tool_params(
+        chart_type=chart_type,
+        data=data,
+        field_map=field_map,
+        config_overrides=config_overrides,
+        options=options,
+        output_format=output_format
+    )
+    
+    # Use chart service
+    chart_service = _get_chart_service()
+    response = chart_service.render_chart(request)
+    
+    # Return MCP Content objects - FastMCP wraps in CallToolResult
+    return response.to_mcp_content()
 
 
 def _format_preferences(prefs: Dict[str, Any]) -> str:
@@ -250,7 +238,7 @@ def register_tools(mcp_server, config: Dict[str, Any] = None):
         chart_width: int = None,
         chart_height: int = None,
         reset_to_defaults: bool = False
-    ) -> Dict[str, Any]:
+    ) -> List[TextContent]:
         """
         Interactive configuration tool for setting user preferences.
         
@@ -279,7 +267,7 @@ def register_tools(mcp_server, config: Dict[str, Any] = None):
         config_overrides: Optional[Dict[str, Any]] = None,
         options: Optional[Dict[str, Any]] = None,
         output_format: str = None
-    ) -> Dict[str, Any]:
+    ) -> List[Union[TextContent, ImageContent]]:
         """
         Render a chart from tabular data and return MCP-compatible content.
         

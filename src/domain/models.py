@@ -7,7 +7,9 @@ validation, type safety, and clear contracts between components.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
+
+from mcp.types import ImageContent, TextContent
 from enum import Enum
 
 from ..visualization.constants import ChartConstants
@@ -251,37 +253,35 @@ class ChartResponse:
             metadata=metadata or {}
         )
     
-    def to_mcp_format(self) -> Dict[str, Any]:
+    def to_mcp_content(self) -> List[Union[TextContent, ImageContent]]:
         """
-        Convert to MCP CallToolResult format (content + isError).
-        Content items are plain dicts per MCP spec so clients can render image/text.
+        Convert to MCP Content objects list.
+        FastMCP will automatically wrap this in CallToolResult.
+        Matches StacklokLabs pattern: return (TextContent, ImageContent, ...).
         """
-        if self.success:
-            content: List[Dict[str, Any]] = []
-            if self.content:
-                for item in self.content:
-                    if not isinstance(item, dict):
-                        continue
-                    kind = item.get("type", "text")
-                    if kind == "text":
-                        content.append({
-                            "type": "text",
-                            "text": item.get("text", ""),
-                        })
-                    elif kind == "image":
-                        content.append({
-                            "type": "image",
-                            "data": item.get("data", ""),
-                            "mimeType": item.get("mimeType", "image/png"),
-                        })
-            return {"content": content, "isError": False}
-        else:
-            return {
-                "content": [
-                    {"type": "text", "text": self.error or "Unknown error"}
-                ],
-                "isError": True,
-            }
+        result: List[Union[TextContent, ImageContent]] = []
+        if self.success and self.content:
+            for item in self.content:
+                if not isinstance(item, dict):
+                    continue
+                kind = item.get("type", "text")
+                if kind == "text":
+                    result.append(
+                        TextContent(type="text", text=item.get("text", ""))
+                    )
+                elif kind == "image":
+                    result.append(
+                        ImageContent(
+                            type="image",
+                            data=item.get("data", ""),
+                            mimeType=item.get("mimeType", "image/png"),
+                        )
+                    )
+        elif not self.success:
+            result.append(
+                TextContent(type="text", text=self.error or "Unknown error")
+            )
+        return result
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
