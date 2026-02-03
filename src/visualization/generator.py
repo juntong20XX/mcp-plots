@@ -3,7 +3,11 @@ from __future__ import annotations
 import base64
 import io
 import logging
+import os
 from typing import Dict, List, Any, Optional, Union
+
+# Set up early logging for font configuration debugging
+_font_logger = logging.getLogger(__name__ + ".font_config")
 
 # =============================================================================
 # IMPORTANT: Configure matplotlib fonts BEFORE importing pyplot
@@ -16,8 +20,9 @@ import matplotlib
 #    Note: _rebuild() was removed in newer matplotlib versions
 try:
     matplotlib.font_manager._rebuild()
+    _font_logger.debug("matplotlib font_manager._rebuild() succeeded")
 except AttributeError:
-    pass
+    _font_logger.debug("matplotlib font_manager._rebuild() not available (newer matplotlib)")
 
 # 2) Explicitly add system font dirs so fonts are found even when running as
 #    non-root (e.g. `node` in LibreChat) with read-only or stale matplotlib cache
@@ -27,16 +32,23 @@ _font_dirs = [
     "/usr/share/fonts",
     "/usr/local/share/fonts",
 ]
+_total_fonts_added = 0
 for _d in _font_dirs:
+    if not os.path.isdir(_d):
+        continue
     try:
         _files = matplotlib.font_manager.findSystemFonts(fontpaths=[_d])
+        _font_logger.info(f"Found {len(_files)} font files in {_d}")
         for _f in _files:
             try:
                 matplotlib.font_manager.fontManager.addfont(_f)
-            except Exception:
-                pass
-    except Exception:
-        pass
+                _total_fonts_added += 1
+            except Exception as e:
+                _font_logger.warning(f"Failed to add font {_f}: {e}")
+    except Exception as e:
+        _font_logger.warning(f"Failed to scan fonts in {_d}: {e}")
+
+_font_logger.info(f"Total fonts added: {_total_fonts_added}")
 
 # These fonts are tried in order; first available one is used
 # Note: TTC fonts may register as JP variant in matplotlib, so we include both
@@ -52,6 +64,10 @@ matplotlib.rcParams['font.sans-serif'] = [
     'DejaVu Sans',           # Universal fallback
 ]
 matplotlib.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
+
+# Verify font configuration
+_resolved_font = matplotlib.font_manager.findfont('Noto Sans CJK JP')
+_font_logger.info(f"Resolved 'Noto Sans CJK JP' to: {_resolved_font}")
 
 # Now safe to import pyplot and other matplotlib modules
 import matplotlib.pyplot as plt
