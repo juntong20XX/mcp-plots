@@ -7,12 +7,27 @@ from typing import Dict, List, Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib
 import seaborn as sns
 import numpy as np
 import pandas as pd
 from matplotlib.sankey import Sankey
 
 from .chart_config import ChartData, ChartConfig, ChartType, Theme, OutputFormat
+
+# Configure matplotlib font fallback for CJK (Chinese/Japanese/Korean) support
+# These fonts are tried in order; first available one is used
+matplotlib.rcParams['font.sans-serif'] = [
+    'Noto Sans CJK SC',      # Google Noto (Linux)
+    'Noto Sans SC',          # Noto variant
+    'WenQuanYi Micro Hei',   # WenQuanYi (Linux)
+    'Microsoft YaHei',       # Windows
+    'SimHei',                # Windows fallback
+    'PingFang SC',           # macOS
+    'Hiragino Sans GB',      # macOS fallback
+    'DejaVu Sans',           # Universal fallback
+]
+matplotlib.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
 from .mermaid_generator import MermaidGenerator
 from .field_validator import FieldValidator, FieldValidationError
 
