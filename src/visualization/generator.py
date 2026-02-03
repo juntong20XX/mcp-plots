@@ -16,9 +16,37 @@ from matplotlib.sankey import Sankey
 from .chart_config import ChartData, ChartConfig, ChartType, Theme, OutputFormat
 
 # Configure matplotlib font fallback for CJK (Chinese/Japanese/Korean) support
+# 1) Rebuild font cache to detect newly installed fonts (e.g., in Docker)
+#    Note: _rebuild() was removed in newer matplotlib versions
+try:
+    matplotlib.font_manager._rebuild()
+except AttributeError:
+    pass
+
+# 2) Explicitly add system font dirs so fonts are found even when running as
+#    non-root (e.g. `node` in LibreChat) with read-only or stale matplotlib cache
+_font_dirs = [
+    "/usr/share/fonts/opentype/noto",   # Noto CJK (Debian: fonts-noto-cjk)
+    "/usr/share/fonts/truetype/noto",
+    "/usr/share/fonts",
+    "/usr/local/share/fonts",
+]
+for _d in _font_dirs:
+    try:
+        _files = matplotlib.font_manager.findSystemFonts(fontpaths=[_d])
+        for _f in _files:
+            try:
+                matplotlib.font_manager.fontManager.addfont(_f)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
 # These fonts are tried in order; first available one is used
+# Note: TTC fonts may register as JP variant in matplotlib, so we include both
 matplotlib.rcParams['font.sans-serif'] = [
-    'Noto Sans CJK SC',      # Google Noto (Linux)
+    'Noto Sans CJK JP',      # TTC often registers as JP (covers SC/TC/JP/KR glyphs)
+    'Noto Sans CJK SC',      # Google Noto (Linux) - installed in Docker
     'Noto Sans SC',          # Noto variant
     'WenQuanYi Micro Hei',   # WenQuanYi (Linux)
     'Microsoft YaHei',       # Windows
