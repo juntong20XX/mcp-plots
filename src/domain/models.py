@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List, Union
 from enum import Enum
 
+from mcp.types import ImageContent, TextContent
+
 from ..visualization.constants import ChartConstants
 
 
@@ -252,11 +254,28 @@ class ChartResponse:
         )
     
     def to_mcp_format(self) -> Dict[str, Any]:
-        """Convert to MCP tool response format"""
+        """Convert to MCP tool response format using TextContent/ImageContent."""
         if self.success:
-            result = {"status": "success"}
+            result: Dict[str, Any] = {"status": "success"}
             if self.content:
-                result["content"] = self.content
+                wrapped: List[Union[TextContent, ImageContent]] = []
+                for item in self.content:
+                    if not isinstance(item, dict):
+                        continue
+                    kind = item.get("type", "text")
+                    if kind == "text":
+                        wrapped.append(
+                            TextContent(type="text", text=item.get("text", ""))
+                        )
+                    elif kind == "image":
+                        wrapped.append(
+                            ImageContent(
+                                type="image",
+                                data=item.get("data", ""),
+                                mimeType=item.get("mimeType", "image/png"),
+                            )
+                        )
+                result["content"] = wrapped
             return result
         else:
             return {
