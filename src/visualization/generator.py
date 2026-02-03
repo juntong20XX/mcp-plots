@@ -5,15 +5,11 @@ import io
 import logging
 from typing import Dict, List, Any, Optional, Union
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+# =============================================================================
+# IMPORTANT: Configure matplotlib fonts BEFORE importing pyplot
+# pyplot import triggers matplotlib initialization including font manager
+# =============================================================================
 import matplotlib
-import seaborn as sns
-import numpy as np
-import pandas as pd
-from matplotlib.sankey import Sankey
-
-from .chart_config import ChartData, ChartConfig, ChartType, Theme, OutputFormat
 
 # Configure matplotlib font fallback for CJK (Chinese/Japanese/Korean) support
 # 1) Rebuild font cache to detect newly installed fonts (e.g., in Docker)
@@ -56,6 +52,17 @@ matplotlib.rcParams['font.sans-serif'] = [
     'DejaVu Sans',           # Universal fallback
 ]
 matplotlib.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
+
+# Now safe to import pyplot and other matplotlib modules
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.sankey import Sankey
+
+import seaborn as sns
+import numpy as np
+import pandas as pd
+
+from .chart_config import ChartData, ChartConfig, ChartType, Theme, OutputFormat
 from .mermaid_generator import MermaidGenerator
 from .field_validator import FieldValidator, FieldValidationError
 
