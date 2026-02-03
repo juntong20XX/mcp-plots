@@ -83,7 +83,8 @@ def _configure_preferences_impl(
                 "content": [{
                     "type": "text",
                     "text": f"✅ **Configuration Reset**\n\nAll preferences reset to defaults:\n{_format_preferences(prefs.to_dict())}"
-                }]
+                }],
+                "isError": False,
             }
         
         # Validate inputs before updating
@@ -120,7 +121,8 @@ def _configure_preferences_impl(
                 "content": [{
                     "type": "text",
                     "text": f"📊 **Current Configuration**\n\n{_format_preferences(current_prefs.to_dict())}\n\n{_get_config_guide()}"
-                }]
+                }],
+                "isError": False,
             }
         
         # Update preferences
@@ -130,12 +132,13 @@ def _configure_preferences_impl(
             "content": [{
                 "type": "text",
                 "text": f"✅ **Configuration Updated**\n\n{_format_preferences(updated_prefs.to_dict())}"
-            }]
+            }],
+            "isError": False,
         }
         
     except Exception as e:
         logger.error(f"configure_preferences failed: {e}")
-        return {"status": "error", "error": str(e)}
+        return {"content": [{"type": "text", "text": str(e)}], "isError": True}
 
 
 def _render_chart_impl(
@@ -181,7 +184,7 @@ def _render_chart_impl(
         
     except Exception as e:
         logger.error(f"render_chart failed: {e}")
-        return {"status": "error", "error": str(e)}
+        return {"content": [{"type": "text", "text": str(e)}], "isError": True}
 
 
 def _format_preferences(prefs: Dict[str, Any]) -> str:

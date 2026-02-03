@@ -7,10 +7,8 @@ validation, type safety, and clear contracts between components.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Union
+from typing import Optional, Dict, Any, List
 from enum import Enum
-
-from mcp.types import ImageContent, TextContent
 
 from ..visualization.constants import ChartConstants
 
@@ -254,33 +252,35 @@ class ChartResponse:
         )
     
     def to_mcp_format(self) -> Dict[str, Any]:
-        """Convert to MCP tool response format using TextContent/ImageContent."""
+        """
+        Convert to MCP CallToolResult format (content + isError).
+        Content items are plain dicts per MCP spec so clients can render image/text.
+        """
         if self.success:
-            result: Dict[str, Any] = {"status": "success"}
+            content: List[Dict[str, Any]] = []
             if self.content:
-                wrapped: List[Union[TextContent, ImageContent]] = []
                 for item in self.content:
                     if not isinstance(item, dict):
                         continue
                     kind = item.get("type", "text")
                     if kind == "text":
-                        wrapped.append(
-                            TextContent(type="text", text=item.get("text", ""))
-                        )
+                        content.append({
+                            "type": "text",
+                            "text": item.get("text", ""),
+                        })
                     elif kind == "image":
-                        wrapped.append(
-                            ImageContent(
-                                type="image",
-                                data=item.get("data", ""),
-                                mimeType=item.get("mimeType", "image/png"),
-                            )
-                        )
-                result["content"] = wrapped
-            return result
+                        content.append({
+                            "type": "image",
+                            "data": item.get("data", ""),
+                            "mimeType": item.get("mimeType", "image/png"),
+                        })
+            return {"content": content, "isError": False}
         else:
             return {
-                "status": "error",
-                "error": self.error or "Unknown error"
+                "content": [
+                    {"type": "text", "text": self.error or "Unknown error"}
+                ],
+                "isError": True,
             }
     
     def to_dict(self) -> Dict[str, Any]:
