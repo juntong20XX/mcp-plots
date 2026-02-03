@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libfreetype6 \
     libpng16-16 \
+    fontconfig fonts-noto-cjk\
     && rm -rf /var/lib/apt/lists/*
+
+RUN fc-cache -fv
 
 # Copy project files
 COPY pyproject.toml ${APP_DIR}/pyproject.toml
